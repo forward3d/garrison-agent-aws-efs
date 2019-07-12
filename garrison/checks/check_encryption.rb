@@ -25,17 +25,17 @@ module Garrison
           Logging.info "Checking region #{region}"
           not_encrypted = unecrypted_efs(region)
 
-          not_encrypted.each do |instance|
+          not_encrypted.each do |filesystem|
             alert(
               name: 'Encryption Violation',
-              target: instance.db_instance_identifier,
-              detail: 'storage_encrypted: false',
-              finding: instance.to_h.to_json,
-              finding_id: "aws-efs-#{instance.db_instance_identifier}-encryption",
+              target: filesystem.file_system_id,
+              detail: 'encrypted: false',
+              finding: filesystem.to_h.to_json,
+              finding_id: "aws-efs-#{filesystem.file_system_id}-encryption",
               urls: [
                 {
                   name: 'AWS Dashboard',
-                  url: "https://console.aws.amazon.com/efs/home?region=#{region}#dbinstance:id=#{instance.db_instance_identifier}"
+                  url: "https://console.aws.amazon.com/efs/home?region=#{region}#/filesystems:id=#{filesystem.file_system_id}"
                 }
               ],
               key_values: [
@@ -59,22 +59,18 @@ module Garrison
             role_session_name: 'garrison-agent-efs'
           )
 
-          efs = Aws::efs::Client.new(credentials: role_credentials, region: region)
+          efs = Aws::EFS::Client.new(credentials: role_credentials, region: region)
         else
-          efs = Aws::efs::Client.new(region: region)
+          efs = Aws::EFS::Client.new(region: region)
         end
 
-        db_instances = efs.describe_db_instances.db_instances
+        file_systems = efs.describe_file_systems.file_systems
 
-        if options[:engines] && options[:engines] != 'all'
-          db_instances.select! { |i| options[:engines].include?(i.engine) }
-        end
-
-        db_instances.select { |i| i.storage_encrypted == false }
-      rescue Aws::efs::Errors::OptInRequired => e
+        file_systems.select { |i| i.encrypted == false }
+      rescue Aws::EFS::Errors::OptInRequired => e
         Logging.warn "#{region} - #{e.message}"
         return []
-      rescue Aws::efs::Errors::InvalidClientTokenId => e
+      rescue Aws::EFS::Errors::InvalidClientTokenId => e
         Logging.warn "#{region} - #{e.message}"
         return []
       end
