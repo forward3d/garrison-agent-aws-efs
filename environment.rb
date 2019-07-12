@@ -21,6 +21,5 @@ module Garrison
   module Checks
     @options = {}
     @options[:regions] = ENV['GARRISON_AWS_REGIONS'] ? ENV['GARRISON_AWS_REGIONS'].split(',') : nil
-    @options[:engines] = ENV['GARRISON_EFS_ENGINES'] ? ENV['GARRISON_EFS_ENGINES'].split(',') : nil
   end
 end
