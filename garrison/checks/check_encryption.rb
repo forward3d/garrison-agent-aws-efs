@@ -8,7 +8,6 @@ module Garrison
         self.family ||= 'infrastructure'
         self.type ||= 'compliance'
         self.options[:regions] ||= 'all'
-        self.options[:engines] ||= 'all'
       end
 
       def key_values
