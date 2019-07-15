@@ -1,0 +1,55 @@
+Garrison Agent - AWS EFS
+--
+
+This is a part of the [Garrison](https://github.com/forward3d/garrison) security project. This agent provides various AWS EFS compliance checks.
+
+### Checks Provided
+
+| Function Name | Description  |
+| ------------- | ------------- |
+| `check_encryption` | Alerts if encryption is not enabled for an EFS file system. |
+
+### Installation & Example
+
+Docker Hub - https://hub.docker.com/r/forward3d/garrison-agent-aws-efs/
+
+    docker pull forward3d/garrison-agent-aws-efs
+    docker run --rm -e "GARRISON_URL=https://garrison.internal.acme.com" forward3d/garrison-agent-aws-efs check_encryption
+
+### Agent Specific Configuration
+
+These are additional specific configuration options for this agent. [Global agent configurations](https://github.com/forward3d/garrison#global-configuration-options) still apply.
+
+| Environmental Variable  | Default | Expects |
+| ------------- | ------------- | ------------- |
+| `GARRISON_AWS_REGIONS` | `all` [[1]](#f1) | Comma Separated Strings eg. `eu-west-1,us-west-2` |
+
+1. <span id="f2"></span> AWS Regions as returned by the AWS SDK at runtime for EFS.
+
+#### AWS Authentication
+
+As this requires access to the AWS API you will need this IAM policy as a minimum for it to operate correctly.
+
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                  "elasticfilesystem:DescribeFileSystems"
+                ],
+                "Resource": "*",
+                "Effect": "Allow"
+            }
+        ]
+    }
+
+We recommend using EC2/ECS Task roles so that you don't need to send credentials into the container, however if you can't use those or want to send in specific Access Keys and Secret keys, please see the [AWS Documentation](https://docs.aws.amazon.com/sdk-for-ruby/v3/developer-guide/setup-config.html#aws-ruby-sdk-credentials-environment) as to how you do that.
+
+##### Cross-Account Authentication (`STS AssumeRole`)
+
+If you run Garrison agents in one account, and want to reach into other AWS accounts you need to send in extra environmental variables to support that.
+
+| Environmental Variable | Value |
+| ------------- | ------------- |
+| `AWS_ACCOUNT_ID` | Not used as part of authentication, but to override the tag set on any alerts |
+| `AWS_ASSUME_ROLE_CREDENTIALS_ARN` | Arn of the role (in the other account) you wish to assume |
