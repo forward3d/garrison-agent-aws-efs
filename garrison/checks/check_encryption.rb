@@ -64,7 +64,6 @@ module Garrison
         end
 
         file_systems = efs.describe_file_systems.file_systems
-
         file_systems.select { |i| i.encrypted == false }
       rescue Aws::EFS::Errors::OptInRequired => e
         Logging.warn "#{region} - #{e.message}"
